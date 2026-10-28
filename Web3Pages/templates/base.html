@@ -8,15 +8,218 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Fraunces:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      body {
-        background-color: #f8f9fa;
+      /* ============ Design tokens: ấm áp kiểu quán cà phê ============ */
+      :root {
+        --cream: #faf6f0;
+        --paper: #fffdf9;
+        --ink: #2b211b;
+        --muted: #8a7b6f;
+        --line: #eadfd2;
+        --caramel: #8b5e3c;
+        --caramel-dark: #6b4528;
+        --latte: #f1e5d8;
+        --radius: 18px;
+
+        --bs-body-font-family: "Be Vietnam Pro", system-ui, -apple-system,
+          "Segoe UI", sans-serif;
+        --bs-body-bg: var(--cream);
+        --bs-body-color: var(--ink);
+        --bs-secondary-color: var(--muted);
+        --bs-border-color: var(--line);
+
+        --bs-primary: #8b5e3c;
+        --bs-primary-rgb: 139, 94, 60;
+        --bs-danger: #c0453a;
+        --bs-danger-rgb: 192, 69, 58;
+        --bs-light-rgb: 246, 239, 230;
+        --bs-dark-rgb: 43, 33, 27;
+
+        /* Màu dịu cho alert */
+        --bs-success-bg-subtle: #eaf1e4;
+        --bs-success-border-subtle: #cfe0c4;
+        --bs-success-text-emphasis: #3d5f2e;
+        --bs-warning-bg-subtle: #fbf0d9;
+        --bs-warning-border-subtle: #f1deb0;
+        --bs-warning-text-emphasis: #7a5a14;
+        --bs-danger-bg-subtle: #f9e6e2;
+        --bs-danger-border-subtle: #efc9c2;
+        --bs-danger-text-emphasis: #8a3228;
+        --bs-info-bg-subtle: #e8f0f2;
+        --bs-info-border-subtle: #c9dde2;
+        --bs-info-text-emphasis: #2f5560;
+        --bs-primary-bg-subtle: var(--latte);
+        --bs-primary-border-subtle: #e2cdb6;
+        --bs-primary-text-emphasis: var(--caramel-dark);
       }
+
+      body {
+        background: radial-gradient(
+            900px 420px at 50% -120px,
+            #f3e6d6 0%,
+            transparent 70%
+          ),
+          var(--cream);
+        background-repeat: no-repeat;
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.6;
+      }
+      ::selection {
+        background: #ecd9c4;
+      }
+
+      h1, h2, h3, h4, h5, .navbar-brand {
+        font-family: "Fraunces", Georgia, serif;
+        letter-spacing: -0.01em;
+      }
+      h1 { font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.02em; }
+
+      /* ============ Navbar: sáng, mỏng, trong mờ ============ */
+      .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        --bs-navbar-padding-y: 0.85rem;
+        -webkit-backdrop-filter: saturate(1.4) blur(12px);
+        backdrop-filter: saturate(1.4) blur(12px);
+      }
+      .navbar.bg-primary {
+        background-color: rgba(250, 246, 240, 0.82) !important;
+        border-bottom: 1px solid var(--line);
+      }
+      .navbar.shadow-sm { box-shadow: none !important; }
+      .navbar-dark {
+        --bs-navbar-color: #6b5a4d;
+        --bs-navbar-hover-color: var(--caramel-dark);
+        --bs-navbar-active-color: var(--caramel-dark);
+        --bs-navbar-brand-color: var(--ink);
+        --bs-navbar-brand-hover-color: var(--caramel-dark);
+      }
+      .navbar-brand { font-size: 1.35rem; }
+      .navbar .navbar-nav .nav-link {
+        padding: 0.45rem 0.95rem;
+        border-radius: 999px;
+        font-size: 0.92rem;
+        font-weight: 500;
+        transition: background-color 0.2s, color 0.2s;
+      }
+      .navbar .navbar-nav .nav-link:hover { background: rgba(139, 94, 60, 0.09); }
+      .navbar .navbar-nav .nav-link.active {
+        background: var(--latte);
+        color: var(--caramel-dark);
+      }
+      @media (max-width: 991.98px) {
+        .navbar .container { row-gap: 0.4rem; }
+        .navbar-nav { flex-direction: row !important; flex-wrap: wrap; margin-left: 0 !important; }
+      }
+
+      /* ============ Card ============ */
       .card {
+        --bs-card-border-radius: var(--radius);
+        --bs-card-border-color: var(--line);
+        --bs-card-bg: var(--paper);
+        --bs-card-inner-border-radius: var(--radius);
+      }
+      .card.bg-white { background-color: var(--paper) !important; }
+      .shadow-sm {
+        box-shadow: 0 1px 2px rgba(60, 40, 20, 0.04),
+          0 14px 34px -14px rgba(60, 40, 20, 0.16) !important;
+      }
+      /* Hero trang chủ */
+      .card.p-5 {
+        background: radial-gradient(120% 120% at 50% 0%, #fff4e6 0%, var(--paper) 62%) !important;
+      }
+      @media (min-width: 768px) {
+        .card.p-5 { padding: 4.5rem 3rem !important; }
+      }
+
+      /* ============ Form ============ */
+      .form-label { font-size: 0.85rem; color: #5a4a3e; margin-bottom: 0.4rem; }
+      .form-control, .form-select {
+        padding-top: 0.65rem;
+        padding-bottom: 0.65rem;
+        padding-left: 0.95rem;
         border-radius: 12px;
-        border: none;
+        border: 1px solid var(--line);
+        background-color: #fdfaf5;
+        color: var(--ink);
+        transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+      }
+      .form-control::placeholder { color: #b9aa9b; }
+      .form-control:focus, .form-select:focus {
+        background-color: #fff;
+        border-color: var(--caramel);
+        box-shadow: 0 0 0 4px rgba(139, 94, 60, 0.14);
+      }
+
+      /* ============ Button ============ */
+      .btn {
+        --bs-btn-border-radius: 999px;
+        --bs-btn-font-weight: 600;
+        transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s,
+          border-color 0.2s, color 0.2s;
+      }
+      .btn:hover { transform: translateY(-1px); }
+      .btn:active { transform: translateY(0); }
+      .btn-primary {
+        --bs-btn-bg: var(--caramel);
+        --bs-btn-border-color: var(--caramel);
+        --bs-btn-hover-bg: var(--caramel-dark);
+        --bs-btn-hover-border-color: var(--caramel-dark);
+        --bs-btn-active-bg: #573720;
+        --bs-btn-active-border-color: #573720;
+        --bs-btn-focus-shadow-rgb: 139, 94, 60;
+      }
+      .btn-primary:hover { box-shadow: 0 10px 22px -10px rgba(107, 69, 40, 0.7); }
+      .btn-outline-secondary {
+        --bs-btn-color: var(--ink);
+        --bs-btn-border-color: #dccbb8;
+        --bs-btn-hover-bg: var(--ink);
+        --bs-btn-hover-border-color: var(--ink);
+        --bs-btn-hover-color: #fff;
+        --bs-btn-active-bg: var(--ink);
+        --bs-btn-active-border-color: var(--ink);
+        --bs-btn-focus-shadow-rgb: 43, 33, 27;
+      }
+
+      /* ============ Alert & Badge ============ */
+      .alert { border-radius: 14px; }
+      .badge { font-weight: 500; }
+      .badge.bg-primary {
+        background-color: var(--latte) !important;
+        color: var(--caramel-dark);
+      }
+
+      /* ============ Footer ============ */
+      footer.bg-white { background: transparent !important; }
+
+      /* ============ Hiệu ứng nhẹ ============ */
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: none; }
+      }
+      main { animation: rise 0.45s ease both; }
+      @media (prefers-reduced-motion: reduce) {
+        main { animation: none; }
+        .btn, .btn:hover { transition: none; transform: none; }
       }
     </style>
+    <script>
+      // Đánh dấu mục menu đang mở (không cần sửa HTML bên dưới)
+      document.addEventListener("DOMContentLoaded", function () {
+        var here = location.pathname.replace(/\/+$/, "") || "/";
+        document.querySelectorAll(".navbar-nav .nav-link").forEach(function (a) {
+          var p = a.getAttribute("href").replace(/\/+$/, "") || "/";
+          if (p === here) a.classList.add("active");
+        });
+      });
+    </script>
     {% block styles %}{% endblock %}
   </head>
   <body>
@@ -26,6 +229,9 @@
         <div class="navbar-nav ms-auto">
           <a class="nav-link" href="/">Trang chủ</a>
           <a class="nav-link" href="/menu">Thực đơn</a>
+          <a class="nav-link" href="/calculator">Máy tính</a>
+          <a class="nav-link" href="/grade">Tính điểm</a>
+          <a class="nav-link" href="/bmi">BMI</a>
           <a class="nav-link" href="/contact">Liên hệ</a>
         </div>
       </div>

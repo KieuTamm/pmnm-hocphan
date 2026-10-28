@@ -1,11 +1,14 @@
-{% extends "base.html" %} {% block title %}Trang chủ{% endblock %} {% block
-content %}
+{% extends "base.html" %}
+
+{% block title %}Trang chủ{% endblock %}
+
+{% block content %}
 <div class="card shadow-sm p-5 text-center bg-white">
-  <h1 class="fw-bold text-primary mb-3">Chào mừng tới {{ shop.name }}</h1>
-  <p class="text-muted">Địa chỉ: {{ shop.address }}</p>
-  <div>
-    <a href="/menu" class="btn btn-primary px-4 me-2">Xem Menu</a>
-    <a href="/contact" class="btn btn-outline-secondary px-4">Liên hệ</a>
-  </div>
+    <h1 class="fw-bold text-primary mb-3">Chào mừng tới {{ shop.name }}</h1>
+    <p class="text-muted">Địa chỉ: {{ shop.address }}</p>
+    <div>
+        <a href="/menu" class="btn btn-primary px-4 me-2">Xem Menu</a>
+        <a href="/contact" class="btn btn-outline-secondary px-4">Liên hệ</a>
+    </div>
 </div>
 {% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Tính BMI{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm p-4 bg-white col-md-6 mx-auto">
+  <h3 class="fw-bold text-primary text-center mb-4">⚖️ Tính Chỉ Số BMI</h3>
+
+  {% if errors.get('general') %}
+  <div class="alert alert-danger py-2 text-center mb-3">{{ errors['general'] }}</div>
+  {% endif %}
+
+  <form method="POST" action="/bmi">
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold">Chiều cao (cm)</label>
+        <input type="text" name="height" value="{{ height }}"
+               class="form-control {% if errors.get('height') %}is-invalid{% endif %}"
+               placeholder="VD: 170" />
+        {% if errors.get('height') %}<div class="text-danger small mt-1">{{ errors['height'] }}</div>{% endif %}
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold">Cân nặng (kg)</label>
+        <input type="text" name="weight" value="{{ weight }}"
+               class="form-control {% if errors.get('weight') %}is-invalid{% endif %}"
+               placeholder="VD: 65,5" />
+        {% if errors.get('weight') %}<div class="text-danger small mt-1">{{ errors['weight'] }}</div>{% endif %}
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Tính BMI</button>
+  </form>
+
+  {% if result %}
+  <div class="alert alert-{{ result.color }} mt-4 mb-0 text-center">
+    <div class="fw-bold fs-4">{{ result.bmi }} · {{ result.label }}</div>
+    <div class="small mt-1">Cân nặng nên có: {{ result.lo }} – {{ result.hi }} kg</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

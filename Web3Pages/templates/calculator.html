@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Máy tính{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm p-4 bg-white col-md-6 mx-auto">
+  <h3 class="fw-bold text-primary text-center mb-4">🧮 Máy Tính Cơ Bản</h3>
+
+  {% if errors.get('general') %}
+  <div class="alert alert-danger py-2 text-center mb-3">{{ errors['general'] }}</div>
+  {% endif %}
+
+  <form method="POST" action="/calculator">
+    <div class="row g-2 mb-3">
+      <div class="col-4">
+        <label class="form-label fw-semibold">Số a</label>
+        <input type="text" name="a" value="{{ a }}"
+               class="form-control {% if errors.get('a') %}is-invalid{% endif %}"
+               placeholder="Số thứ nhất" />
+        {% if errors.get('a') %}<div class="text-danger small mt-1">{{ errors['a'] }}</div>{% endif %}
+      </div>
+
+      <div class="col-4">
+        <label class="form-label fw-semibold">Phép toán</label>
+        <select name="op" class="form-select">
+          {% for o in ['+', '-', '*', '/'] %}
+          <option value="{{ o }}" {% if op == o %}selected{% endif %}>{{ o }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-4">
+        <label class="form-label fw-semibold">Số b</label>
+        <input type="text" name="b" value="{{ b }}"
+               class="form-control {% if errors.get('b') %}is-invalid{% endif %}"
+               placeholder="Số thứ hai" />
+        {% if errors.get('b') %}<div class="text-danger small mt-1">{{ errors['b'] }}</div>{% endif %}
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Tính toán</button>
+  </form>
+
+  {% if result %}
+  <div class="alert alert-success mt-4 mb-0 text-center fw-bold fs-5">{{ result }}</div>
+  {% endif %}
+</div>
+{% endblock %}

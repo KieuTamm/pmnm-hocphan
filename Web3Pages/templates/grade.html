@@ -1,0 +1,47 @@
+{% extends "base.html" %} {% block title %}Tính điểm{% endblock %} {% block
+content %}
+<div class="card shadow-sm p-4 bg-white col-md-7 mx-auto">
+  <h3 class="fw-bold text-primary text-center mb-4">🎓 Tính Điểm Học Phần</h3>
+
+  {% if errors.get('general') %}
+  <div class="alert alert-danger py-2 text-center mb-3">
+    {{ errors['general'] }}
+  </div>
+  {% endif %}
+
+  <form method="POST" action="/grade">
+    <div class="row g-2 mb-3">
+      {% for key, label, name, weight in fields %}
+      <div class="col-4">
+        <label class="form-label fw-semibold"
+          >{{ name }} ({{ (weight * 100)|int }}%)</label
+        >
+        <input
+          type="text"
+          name="{{ key }}"
+          value="{{ values[key] }}"
+          class="form-control {% if errors.get(key) %}is-invalid{% endif %}"
+          placeholder="0"
+        />
+        {% if errors.get(key) %}
+        <div class="text-danger small mt-1">{{ errors[key] }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
+      Tính điểm
+    </button>
+  </form>
+
+  {% if result %}
+  <div
+    class="alert {{ 'alert-danger' if result.letter == 'F' else 'alert-success' }} mt-4 mb-0 text-center fw-bold fs-5"
+  >
+    {{ result.score }} · {{ result.letter }}{% if result.note %} ({{ result.note
+    }}){% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
