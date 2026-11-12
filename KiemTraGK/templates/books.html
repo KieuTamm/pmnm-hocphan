@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản Lý Sách</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-body-tertiary">
+    <nav
+      class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4 py-3"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold fs-4" href="/"
+          ><i class="bi bi-book-half text-warning me-2"></i>QUẢN LÝ SÁCH</a
+        >
+        <div class="navbar-nav ms-auto gap-2">
+          <a class="nav-link fw-semibold px-3" href="/"
+            ><i class="bi bi-speedometer2 me-1"></i>Dashboard</a
+          >
+          <a class="nav-link fw-semibold px-3" href="/categories"
+            ><i class="bi bi-folder2-open me-1"></i>Danh mục</a
+          >
+          <a
+            class="nav-link active fw-semibold px-3 rounded bg-primary text-white"
+            href="/books"
+            ><i class="bi bi-journal-bookmark me-1"></i>Sách</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      {% if error %}
+      <div class="alert alert-danger shadow-sm rounded-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+      </div>
+      {% endif %}
+
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white border-bottom py-3 fw-bold fs-5">
+          {% if edit_book %}
+          <i class="bi bi-pencil-square text-warning me-2"></i>Chỉnh Sửa Thông
+          Tin Sách {% else %}
+          <i class="bi bi-journal-plus text-success me-2"></i>Thêm Sách Mới {%
+          endif %}
+        </div>
+        <div class="card-body p-4">
+          <form
+            method="POST"
+            action="/books{% if cat_filter %}?category_id={{ cat_filter }}{% endif %}"
+            class="row g-3 align-items-end"
+          >
+            <input
+              type="hidden"
+              name="id"
+              value="{{ edit_book.id if edit_book else '' }}"
+            />
+            <div class="col-md-3">
+              <label class="form-label fw-semibold text-secondary small"
+                >Danh mục *</label
+              >
+              <select name="category_id" class="form-select" required>
+                <option value="">-- Chọn danh mục --</option>
+                {% for cat in categories %} {% if edit_book and
+                edit_book.category_id == cat.id %}
+                <option value="{{ cat.id }}" selected>{{ cat.name }}</option>
+                {% elif not edit_book and cat_filter == cat.id %}
+                <option value="{{ cat.id }}" selected>{{ cat.name }}</option>
+                {% else %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endif %} {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold text-secondary small"
+                >Tên sách *</label
+              >
+              <input
+                type="text"
+                name="title"
+                class="form-control"
+                placeholder="Nhập tên sách..."
+                value="{{ edit_book.title if edit_book else '' }}"
+                required
+              />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-semibold text-secondary small"
+                >Tác giả *</label
+              >
+              <input
+                type="text"
+                name="author"
+                class="form-control"
+                placeholder="Tên tác giả..."
+                value="{{ edit_book.author if edit_book else '' }}"
+                required
+              />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-semibold text-secondary small"
+                >Giá bán (VNĐ) *</label
+              >
+              <input
+                type="number"
+                step="any"
+                name="price"
+                class="form-control"
+                placeholder="Ví dụ: 95000"
+                value="{{ edit_book.price if edit_book else '' }}"
+                required
+              />
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+              <button
+                type="submit"
+                class="btn w-100 fw-semibold {{ 'btn-warning' if edit_book else 'btn-success' }}"
+              >
+                <i
+                  class="bi {{ 'bi-check-circle' if edit_book else 'bi-plus-lg' }} me-1"
+                ></i
+                >{{ "Lưu" if edit_book else "Thêm" }}
+              </button>
+              {% if edit_book %}
+              <a
+                href="/books{% if cat_filter %}?category_id={{ cat_filter }}{% endif %}"
+                class="btn btn-outline-secondary"
+                >Hủy</a
+              >
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div
+          class="card-header bg-white border-bottom py-3 d-flex flex-wrap justify-content-between align-items-center gap-3"
+        >
+          <span class="fw-bold fs-5"
+            ><i class="bi bi-book text-primary me-2"></i>Danh Sách Sách ({{
+            books|length }})</span
+          >
+          <form
+            method="GET"
+            action="/books"
+            class="d-flex align-items-center gap-2"
+          >
+            <label class="text-muted small fw-semibold text-nowrap"
+              ><i class="bi bi-funnel me-1"></i>Lọc theo:</label
+            >
+            <select
+              name="category_id"
+              class="form-select form-select-sm rounded-pill px-3"
+              onchange="this.form.submit()"
+            >
+              <option value="">Tất cả danh mục</option>
+              {% for cat in categories %} {% if cat_filter == cat.id %}
+              <option value="{{ cat.id }}" selected>{{ cat.name }}</option>
+              {% else %}
+              <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endif %} {% endfor %}
+            </select>
+          </form>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4">ID</th>
+                <th>Tên sách</th>
+                <th>Tác giả</th>
+                <th>Danh mục</th>
+                <th>Giá bán</th>
+                <th class="text-end pe-4">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for book in books %}
+              <tr>
+                <td class="ps-4 fw-bold text-muted">#{{ book.id }}</td>
+                <td class="fw-bold text-dark">{{ book.title }}</td>
+                <td class="text-secondary">
+                  <i class="bi bi-person me-1"></i>{{ book.author }}
+                </td>
+                <td>
+                  <span
+                    class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1"
+                  >
+                    {{ book.category.name }}
+                  </span>
+                </td>
+                <td class="fw-bold text-success">
+                  {{ "{:,.0f}".format(book.price) }} đ
+                </td>
+                <td class="text-end pe-4">
+                  <a
+                    href="/books?edit={{ book.id }}{% if cat_filter %}&category_id={{ cat_filter }}{% endif %}"
+                    class="btn btn-sm btn-outline-warning rounded-pill px-3 me-1"
+                  >
+                    <i class="bi bi-pencil me-1"></i>Sửa
+                  </a>
+                  <form
+                    action="/books/delete/{{ book.id }}"
+                    method="POST"
+                    class="d-inline"
+                    onsubmit="return confirm('Xóa sách này?');"
+                  >
+                    <button
+                      type="submit"
+                      class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                    >
+                      <i class="bi bi-trash me-1"></i>Xóa
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6" class="text-center py-5 text-muted">
+                  <i class="bi bi-journal-x fs-1 d-block mb-2"></i>Chưa có sách
+                  nào trong mục này
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
