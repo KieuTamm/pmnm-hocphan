@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block shop_content %}
+
+{% if view == 'cart' %}
+<h3 class="fw-bold mb-4">Giỏ hàng ({{ items|length }} đầu sách)</h3>
+
+{% if items %}
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Sách</th>
+          <th>Đơn giá</th>
+          <th>Số lượng</th>
+          <th>Thành tiền</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-3">
+              <div class="bg-secondary-subtle rounded" style="width: 45px; height: 55px; overflow: hidden;">
+                {% if item.book.cover %}
+                <img src="{{ url_for('static', filename='uploads/' + item.book.cover) }}" class="w-100 h-100 object-fit-cover" />
+                {% endif %}
+              </div>
+              <a href="/books/{{ item.book.id }}" class="fw-semibold text-decoration-none text-dark">{{ item.book.title }}</a>
+            </div>
+          </td>
+          <td>{{ "{:,.0f}".format(item.book.price).replace(",", ".") }} đ</td>
+          <td>
+            <div class="d-inline-flex align-items-center gap-1">
+              <form method="POST" action="/cart/update/{{ item.book.id }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="hidden" name="action" value="dec" />
+                <button type="submit" class="btn btn-sm btn-outline-primary">−</button>
+              </form>
+              <span class="px-3 py-1 border rounded bg-light fw-bold">{{ item.qty }}</span>
+              <form method="POST" action="/cart/update/{{ item.book.id }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="hidden" name="action" value="inc" />
+                <button type="submit" class="btn btn-sm btn-outline-primary" {{ 'disabled' if item.qty >= item.book.stock }}>+</button>
+              </form>
+            </div>
+          </td>
+          <td class="fw-bold">{{ "{:,.0f}".format(item.line_total).replace(",", ".") }} đ</td>
+          <td class="text-end">
+            <form method="POST" action="/cart/update/{{ item.book.id }}" onsubmit="return confirm('Xoá sách này khỏi giỏ?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <input type="hidden" name="action" value="remove" />
+              <button type="submit" class="btn btn-link text-danger text-decoration-none btn-sm">✕ Xoá</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer bg-white py-3 d-flex justify-content-end align-items-center gap-4">
+    <span class="text-muted">Tổng cộng</span>
+    <span class="fs-4 fw-bold" style="color: #ea580c;">{{ "{:,.0f}".format(subtotal).replace(",", ".") }} đ</span>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center">
+  <div class="d-flex gap-2">
+    <a href="/books" class="btn btn-outline-primary">← Tiếp tục mua sách</a>
+    <form method="POST" action="/cart/clear" onsubmit="return confirm('Xoá toàn bộ giỏ hàng?')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-outline-danger">Xoá giỏ hàng</button>
+    </form>
+  </div>
+  <a href="/checkout" class="btn btn-primary btn-lg px-4 fw-semibold">Đặt hàng →</a>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm p-5 text-center rounded-3">
+  <h5 class="text-muted mb-3">Giỏ hàng trống</h5>
+  <div><a href="/books" class="btn btn-primary">← Quay lại danh sách sách</a></div>
+</div>
+{% endif %}
+
+{% elif view == 'checkout' %}
+<h3 class="fw-bold mb-4">Thông tin khách hàng</h3>
+<div class="row g-4">
+  <div class="col-md-7">
+    <form method="POST" class="card border-0 shadow-sm p-4 rounded-3">
+      {{ form.hidden_tag() }}
+      <div class="mb-3">
+        {{ form.customer_name.label(class="form-label fw-semibold") }}
+        {{ form.customer_name(class="form-control" + (" is-invalid" if form.customer_name.errors else ""), placeholder="Nguyễn Văn An") }}
+        {% for err in form.customer_name.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          {{ form.phone.label(class="form-label fw-semibold") }}
+          {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="0912345678") }}
+          {% for err in form.phone.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          {{ form.email.label(class="form-label fw-semibold") }}
+          {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="ban@example.com") }}
+          {% for err in form.email.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+        </div>
+      </div>
+      <div class="mb-3">
+        {{ form.address.label(class="form-label fw-semibold") }}
+        {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else ""), placeholder="12 Lê Lợi, phường Thuận Hoá, Huế") }}
+        {% for err in form.address.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="mb-3">
+        {{ form.note.label(class="form-label fw-semibold") }}
+        {{ form.note(class="form-control") }}
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-semibold me-3">Thanh toán *</label>
+        {% for subfield in form.payment_method %}
+        <div class="form-check form-check-inline">
+          {{ subfield(class="form-check-input") }}
+          {{ subfield.label(class="form-check-label") }}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        {{ form.submit(class="btn btn-primary btn-lg px-4 fw-semibold") }}
+        <a href="/cart" class="text-decoration-none">← Quay lại giỏ hàng</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-md-5">
+    <div class="card border-0 shadow-sm p-4 rounded-3 bg-white">
+      <h5 class="fw-bold mb-3">Đơn hàng của bạn</h5>
+      {% for item in items %}
+      <div class="d-flex justify-content-between mb-2">
+        <span>{{ item.book.title }} × {{ item.qty }}</span>
+        <span>{{ "{:,.0f}".format(item.line_total).replace(",", ".") }} đ</span>
+      </div>
+      {% endfor %}
+      <hr />
+      <div class="d-flex justify-content-between mb-2">
+        <span class="text-muted">Tạm tính</span>
+        <span>{{ "{:,.0f}".format(subtotal).replace(",", ".") }} đ</span>
+      </div>
+      <div class="d-flex justify-content-between mb-1">
+        <span class="text-muted">Phí giao hàng</span>
+        {% if shipping == 0 %}
+        <span class="text-success fw-semibold">Miễn phí</span>
+        {% else %}
+        <span>{{ "{:,.0f}".format(shipping).replace(",", ".") }} đ</span>
+        {% endif %}
+      </div>
+      <small class="text-muted d-block mb-3">Miễn phí khi tạm tính từ 200.000 đ</small>
+      <hr />
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="fw-bold fs-5">Tổng thanh toán</span>
+        <span class="fw-bold fs-4" style="color: #ea580c;">{{ "{:,.0f}".format(total).replace(",", ".") }} đ</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% elif view == 'success' %}
+<div class="card border-0 shadow-sm p-4 rounded-3 mx-auto" style="max-width: 700px;">
+  <div class="text-center mb-4">
+    <i class="bi bi-check-circle-fill text-success display-4"></i>
+    <h3 class="fw-bold mt-2">Đặt hàng thành công!</h3>
+    <p class="text-muted">Mã đơn hàng: <strong>#{{ order.id }}</strong> · Trạng thái: <span class="badge bg-warning text-dark">{{ order.status }}</span></p>
+  </div>
+  <div class="border rounded p-3 mb-3 bg-light">
+    <p class="mb-1"><strong>Người nhận:</strong> {{ order.customer_name }} ({{ order.phone }})</p>
+    <p class="mb-1"><strong>Địa chỉ:</strong> {{ order.address }}</p>
+    <p class="mb-0"><strong>Thanh toán:</strong> {{ "Tiền mặt khi nhận hàng" if order.payment_method == "COD" else "Chuyển khoản" }}</p>
+  </div>
+  <table class="table table-sm">
+    <thead>
+      <tr><th>Sách</th><th>Đơn giá</th><th>SL</th><th class="text-end">Thành tiền</th></tr>
+    </thead>
+    <tbody>
+      {% for it in order.items %}
+      <tr>
+        <td>{{ it.book.title }}</td>
+        <td>{{ "{:,.0f}".format(it.unit_price).replace(",", ".") }} đ</td>
+        <td>{{ it.quantity }}</td>
+        <td class="text-end">{{ "{:,.0f}".format(it.unit_price * it.quantity).replace(",", ".") }} đ</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="text-end fw-bold fs-5" style="color: #ea580c;">
+    Tổng thanh toán: {{ "{:,.0f}".format(order.total_amount).replace(",", ".") }} đ
+  </div>
+  <div class="text-center mt-4">
+    <a href="/books" class="btn btn-primary">Tiếp tục mua sách</a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

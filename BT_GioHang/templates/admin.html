@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+{% block admin_content %}
+
+{% if view == 'dashboard' %}
+<h3 class="fw-bold mb-4">Tổng quan</h3>
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm p-3">
+      <small class="text-muted">Đầu sách</small>
+      <h2 class="fw-bold mb-0">{{ total_books }}</h2>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm p-3">
+      <small class="text-muted">Đơn chờ xác nhận</small>
+      <h2 class="fw-bold mb-0" style="color: #ea580c;">{{ pending_count }}</h2>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm p-3">
+      <small class="text-muted">Doanh thu tháng {{ current_month }}</small>
+      <h2 class="fw-bold text-success mb-0">{{ "{:,.0f}".format(month_revenue).replace(",", ".") }} đ</h2>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm p-3">
+      <small class="text-muted">Sắp hết hàng</small>
+      <h2 class="fw-bold text-danger mb-0">{{ low_stock_books|length }}</h2>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm p-3">
+      <h5 class="fw-bold mb-3">Đơn hàng mới nhất</h5>
+      <table class="table align-middle">
+        <thead class="table-light">
+          <tr><th>Mã</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th></tr>
+        </thead>
+        <tbody>
+          {% for o in recent_orders %}
+          <tr>
+            <td><a href="/admin/orders/{{ o.id }}" class="fw-bold text-decoration-none">#{{ o.id }}</a></td>
+            <td>{{ o.customer_name }}</td>
+            <td>{{ "{:,.0f}".format(o.total_amount).replace(",", ".") }} đ</td>
+            <td>
+              {% if o.status == 'Chờ xác nhận' %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ o.status }}</span>
+              {% elif o.status == 'Đang giao' %}<span class="badge bg-primary-subtle text-primary">{{ o.status }}</span>
+              {% elif o.status == 'Hoàn tất' %}<span class="badge bg-success-subtle text-success">{{ o.status }}</span>
+              {% else %}<span class="badge bg-secondary-subtle text-secondary">{{ o.status }}</span>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-muted">Chưa có đơn hàng</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a href="/admin/orders" class="text-decoration-none small fw-semibold">Xem tất cả đơn hàng →</a>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-3">
+      <h5 class="fw-bold mb-3">Sắp hết hàng (≤ 5)</h5>
+      <ul class="list-group list-group-flush mb-3">
+        {% for b in low_stock_books %}
+        <li class="list-group-item d-flex justify-content-between px-0">
+          <a href="/admin/books/{{ b.id }}/edit" class="text-decoration-none text-dark">{{ b.title }}</a>
+          <span class="fw-bold text-danger">{{ b.stock }}</span>
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted px-0">Không có sách sắp hết</li>
+        {% endfor %}
+      </ul>
+      <a href="/admin/books?stock=low" class="text-decoration-none small fw-semibold">Nhập thêm sách →</a>
+    </div>
+  </div>
+</div>
+
+{% elif view == 'books' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="fw-bold mb-0">Sách ({{ pagination.total }})</h3>
+  <a href="/admin/books/new" class="btn btn-primary fw-semibold">+ Thêm sách</a>
+</div>
+
+<form method="GET" action="/admin/books" class="row g-2 mb-3">
+  <div class="col-md-5">
+    <input type="text" name="q" class="form-control" placeholder="Tìm tên sách, tác giả..." value="{{ q }}" />
+  </div>
+  <div class="col-md-3">
+    <select name="category_id" class="form-select">
+      <option value="">Mọi danh mục</option>
+      {% for c in categories %}
+      <option value="{{ c.id }}" {{ 'selected' if cat_id == c.id }}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="stock" class="form-select">
+      <option value="">Tồn kho</option>
+      <option value="in" {{ 'selected' if stock_filter == 'in' }}>Còn hàng (&gt; 5)</option>
+      <option value="low" {{ 'selected' if stock_filter == 'low' }}>Sắp hết (≤ 5)</option>
+      <option value="out" {{ 'selected' if stock_filter == 'out' }}>Hết hàng (0)</option>
+    </select>
+  </div>
+  <div class="col-md-1">
+    <button type="submit" class="btn btn-outline-primary w-100">Lọc</button>
+  </div>
+</form>
+
+<div class="card border-0 shadow-sm">
+  <table class="table align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Tên sách / Tác giả</th><th>Danh mục</th><th>Giá</th><th>Tồn</th><th class="text-end">Thao tác</th></tr>
+    </thead>
+    <tbody>
+      {% for b in pagination.items %}
+      <tr>
+        <td>
+          <strong>{{ b.title }}</strong><br />
+          <small class="text-muted">{{ b.author }}</small>
+        </td>
+        <td>{{ b.category.name }}</td>
+        <td>{{ "{:,.0f}".format(b.price).replace(",", ".") }}</td>
+        <td class="{{ 'text-danger fw-bold' if b.stock == 0 }}">{{ b.stock }}</td>
+        <td class="text-end">
+          <a href="/admin/books/{{ b.id }}/edit" class="btn btn-link btn-sm text-decoration-none">Sửa</a>
+          <form method="POST" action="/admin/books/{{ b.id }}/delete" class="d-inline" onsubmit="return confirm('Xoá sách này?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-link btn-sm text-danger text-decoration-none" {{ 'disabled' if b.order_items|length > 0 }}>Xoá</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+    <small class="text-muted">Trang {{ pagination.page }} / {{ pagination.pages or 1 }} (Tổng {{ pagination.total }} sách)</small>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% for p in pagination.iter_pages() %}
+          {% if p %}
+          <li class="page-item {{ 'active' if p == pagination.page }}">
+            <a class="page-link" href="{{ url_for('admin_books', page=p, q=q, category_id=cat_id, stock=stock_filter) }}">{{ p }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </nav>
+  </div>
+</div>
+
+{% elif view == 'book_form' %}
+<h3 class="fw-bold mb-4">{{ 'Sửa sách: ' + book.title if book else 'Thêm sách mới' }}</h3>
+<form method="POST" enctype="multipart/form-data" class="card border-0 shadow-sm p-4">
+  {{ form.hidden_tag() }}
+  <div class="row g-4">
+    <div class="col-md-8">
+      <div class="mb-3">
+        {{ form.title.label(class="form-label fw-semibold") }}
+        {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+        {% for err in form.title.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="mb-3">
+        {{ form.author.label(class="form-label fw-semibold") }}
+        {{ form.author(class="form-control" + (" is-invalid" if form.author.errors else "")) }}
+        {% for err in form.author.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          {{ form.category_id.label(class="form-label fw-semibold") }}
+          {{ form.category_id(class="form-select") }}
+        </div>
+        <div class="col-md-6">
+          {{ form.year.label(class="form-label fw-semibold") }}
+          {{ form.year(class="form-control" + (" is-invalid" if form.year.errors else "")) }}
+          {% for err in form.year.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+        </div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          {{ form.price.label(class="form-label fw-semibold") }}
+          {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else "")) }}
+          {% for err in form.price.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          {{ form.stock.label(class="form-label fw-semibold") }}
+          {{ form.stock(class="form-control" + (" is-invalid" if form.stock.errors else "")) }}
+          {% for err in form.stock.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+        </div>
+      </div>
+      <div class="mb-3">
+        {{ form.publisher.label(class="form-label fw-semibold") }}
+        {{ form.publisher(class="form-control") }}
+      </div>
+      <div class="mb-4">
+        {{ form.description.label(class="form-label fw-semibold") }}
+        {{ form.description(class="form-control", rows=3) }}
+      </div>
+      <div class="d-flex gap-2">
+        {{ form.submit(class="btn btn-primary px-4 fw-semibold") }}
+        <a href="/admin/books" class="btn btn-outline-secondary px-4">Huỷ</a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">Ảnh bìa</label>
+      <div class="bg-secondary-subtle rounded d-flex align-items-center justify-content-center mb-3" style="height: 250px; overflow: hidden;">
+        {% if book and book.cover %}
+        <img src="{{ url_for('static', filename='uploads/' + book.cover) }}" class="w-100 h-100 object-fit-cover" />
+        {% else %}
+        <span class="text-muted">Ảnh hiện tại</span>
+        {% endif %}
+      </div>
+      {{ form.cover(class="form-control" + (" is-invalid" if form.cover.errors else "")) }}
+      {% for err in form.cover.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+      <small class="text-muted d-block mt-1">JPG, PNG, WEBP · tối đa 2 MB</small>
+    </div>
+  </div>
+</form>
+
+{% elif view == 'categories' %}
+<h3 class="fw-bold mb-4">Danh mục sách ({{ rows|length }})</h3>
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Tên danh mục</th><th>Số sách</th><th class="text-end">Thao tác</th></tr>
+        </thead>
+        <tbody>
+          {% for cat, count in rows %}
+          <tr>
+            <td><a href="/admin/books?category_id={{ cat.id }}" class="fw-semibold text-decoration-none text-dark">{{ cat.name }}</a></td>
+            <td>{{ count }}</td>
+            <td class="text-end">
+              <a href="/admin/categories?edit={{ cat.id }}" class="btn btn-link btn-sm text-decoration-none">Sửa</a>
+              <form method="POST" action="/admin/categories/{{ cat.id }}/delete" class="d-inline" onsubmit="return confirm('Xoá danh mục này?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="btn btn-link btn-sm text-danger text-decoration-none">Xoá</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <form method="POST" action="/admin/categories" class="card border-0 shadow-sm p-3">
+      {{ form.hidden_tag() }}
+      <input type="hidden" name="cat_id" value="{{ edit_cat.id if edit_cat else '' }}" />
+      <h6 class="fw-bold mb-3">{{ 'Sửa danh mục' if edit_cat else 'Thêm danh mục' }}</h6>
+      <div class="mb-3">
+        {{ form.name.label(class="form-label small fw-semibold") }}
+        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+        {% for err in form.name.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="mb-3">
+        {{ form.description.label(class="form-label small fw-semibold") }}
+        {{ form.description(class="form-control", rows=2) }}
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100">{{ 'Cập nhật' if edit_cat else '+ Thêm' }}</button>
+        {% if edit_cat %}<a href="/admin/categories" class="btn btn-outline-secondary">Huỷ</a>{% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{% elif view == 'orders' %}
+<h3 class="fw-bold mb-3">Đơn hàng</h3>
+<ul class="nav nav-pills mb-3 gap-2">
+  <li class="nav-item">
+    <a class="nav-link {{ 'active' if not status }}" href="/admin/orders">Tất cả ({{ total_all }})</a>
+  </li>
+  {% for st in ['Chờ xác nhận', 'Đang giao', 'Hoàn tất', 'Đã huỷ'] %}
+  <li class="nav-item">
+    <a class="nav-link {{ 'active' if status == st }}" href="/admin/orders?status={{ st }}">{{ st }} ({{ status_counts.get(st, 0) }})</a>
+  </li>
+  {% endfor %}
+</ul>
+
+<form method="GET" action="/admin/orders" class="row g-2 mb-3">
+  <input type="hidden" name="status" value="{{ status }}" />
+  <div class="col-md-10">
+    <input type="text" name="q" class="form-control" placeholder="Mã đơn, tên khách hàng, số điện thoại..." value="{{ q }}" />
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary w-100">Tìm</button>
+  </div>
+</form>
+
+<div class="card border-0 shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Mã</th><th>Ngày đặt</th><th>Khách hàng</th><th>Điện thoại</th><th>Tổng tiền</th><th>Trạng thái</th></tr>
+    </thead>
+    <tbody>
+      {% for o in pagination.items %}
+      <tr style="cursor: pointer;" onclick="window.location='/admin/orders/{{ o.id }}'">
+        <td class="fw-bold text-primary">#{{ o.id }}</td>
+        <td>{{ o.created_at.strftime('%d/%m/%Y') }}</td>
+        <td>{{ o.customer_name }}</td>
+        <td>{{ o.phone }}</td>
+        <td>{{ "{:,.0f}".format(o.total_amount).replace(",", ".") }} đ</td>
+        <td>
+          {% if o.status == 'Chờ xác nhận' %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ o.status }}</span>
+          {% elif o.status == 'Đang giao' %}<span class="badge bg-primary-subtle text-primary">{{ o.status }}</span>
+          {% elif o.status == 'Hoàn tất' %}<span class="badge bg-success-subtle text-success">{{ o.status }}</span>
+          {% else %}<span class="badge bg-secondary-subtle text-secondary">{{ o.status }}</span>{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center text-muted py-4">Không có đơn hàng nào</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+    <div>
+      <strong>{{ filtered_count }} đơn</strong> · tổng giá trị
+      <span class="fw-bold ms-2" style="color: #ea580c;">{{ "{:,.0f}".format(filtered_sum).replace(",", ".") }} đ</span>
+    </div>
+    <ul class="pagination pagination-sm mb-0">
+      {% for p in pagination.iter_pages() %}
+        {% if p %}
+        <li class="page-item {{ 'active' if p == pagination.page }}">
+          <a class="page-link" href="{{ url_for('admin_orders', page=p, status=status, q=q) }}">{{ p }}</a>
+        </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% elif view == 'order_detail' %}
+<div class="mb-3">
+  <a href="/admin/orders" class="text-decoration-none small">Đơn hàng</a> › <span class="small text-muted">#{{ order.id }}</span>
+  <h3 class="fw-bold mt-1">Đơn hàng #{{ order.id }} · {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</h3>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm p-3 mb-3">
+      <h6 class="fw-bold">Khách hàng</h6>
+      <p class="mb-1">{{ order.customer_name }} · {{ order.phone }}</p>
+      <p class="mb-1">{{ order.address }}</p>
+      <p class="mb-1">Thanh toán: {{ "Tiền mặt khi nhận hàng" if order.payment_method == "COD" else "Chuyển khoản" }}</p>
+      {% if order.note %}<small class="text-muted">Ghi chú: {{ order.note }}</small>{% endif %}
+    </div>
+
+    <div class="card border-0 shadow-sm p-3">
+      <table class="table align-middle">
+        <thead class="table-light">
+          <tr><th>Sách</th><th>Đơn giá</th><th>SL</th><th class="text-end">Thành tiền</th></tr>
+        </thead>
+        <tbody>
+          {% for it in order.items %}
+          <tr>
+            <td>{{ it.book.title }}</td>
+            <td>{{ "{:,.0f}".format(it.unit_price).replace(",", ".") }}</td>
+            <td>{{ it.quantity }}</td>
+            <td class="text-end">{{ "{:,.0f}".format(it.unit_price * it.quantity).replace(",", ".") }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="text-end">
+        <p class="mb-1">Phí giao hàng: <strong class="text-success">{{ "Miễn phí" if order.shipping_fee == 0 else "{:,.0f}".format(order.shipping_fee).replace(",", ".") + " đ" }}</strong></p>
+        <h5>Tổng cộng: <strong style="color: #ea580c;">{{ "{:,.0f}".format(order.total_amount).replace(",", ".") }} đ</strong></h5>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-3 mb-3">
+      <h6 class="fw-bold">Trạng thái</h6>
+      <div class="mb-3"><span class="badge bg-warning-subtle text-warning-emphasis fs-6">{{ order.status }}</span></div>
+
+      {% if order.status in ['Chờ xác nhận', 'Đang giao'] %}
+      <form method="POST" class="mb-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <label class="form-label small text-muted">Chuyển sang</label>
+        <select name="status" class="form-select mb-2">
+          {% if order.status == 'Chờ xác nhận' %}
+          <option value="Đang giao">Đang giao</option>
+          {% elif order.status == 'Đang giao' %}
+          <option value="Hoàn tất">Hoàn tất</option>
+          {% endif %}
+        </select>
+        <button type="submit" class="btn btn-primary w-100 fw-semibold">Cập nhật</button>
+      </form>
+
+      <form method="POST" onsubmit="return confirm('Xác nhận huỷ đơn này và hoàn lại tồn kho?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="status" value="Đã huỷ" />
+        <button type="submit" class="btn btn-outline-danger w-100">Huỷ đơn</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <div class="card border-0 shadow-sm p-3">
+      <h6 class="fw-bold">Lịch sử</h6>
+      <ul class="list-unstyled small mb-0">
+        {% for line in order.history.split('\n') %}
+        <li class="mb-1">● {{ line }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
